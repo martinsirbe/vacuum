@@ -20,6 +20,43 @@ func TestPathsKebabCase_RunRule(t *testing.T) {
 	assert.Len(t, res, 0)
 }
 
+func TestPathsKebabCase_ParameterKeys(t *testing.T) {
+
+	yml := `openapi: 3.0.0
+paths:
+  '/looking/{kebab-case}/and/feeling-groovy':
+    get:
+      summary: kebab-case param key is fine
+  '/looking/{camelCase}/and/feeling-groovy':
+    get:
+      summary: camelCase param key is fine
+  '/looking/{snake_case}/and/feeling-groovy':
+    get:
+      summary: camelCase param key is fine
+  '/looking/{PascalCase}/and/feeling-groovy':
+    get:
+      summary: PascalCase param key is fine`
+
+	path := "$"
+
+	var rootNode yaml.Node
+	err := yaml.Unmarshal([]byte(yml), &rootNode)
+
+	assert.NoError(t, err)
+	nodes, _ := utils.FindNodes([]byte(yml), path)
+
+	rule := buildOpenApiTestRuleAction(path, "pathsKebabCase", "", nil)
+	ctx := buildOpenApiTestContext(model.CastToRuleAction(rule.Then), nil)
+	ctx.Rule = &rule
+	config := index.CreateOpenAPIIndexConfig()
+	ctx.Index = index.NewSpecIndexWithConfig(&rootNode, config)
+
+	def := PathsKebabCase{}
+	res := def.RunRule(nodes, ctx)
+
+	assert.Empty(t, res)
+}
+
 func TestPathsKebabCase_Success(t *testing.T) {
 
 	yml := `openapi: 3.0.0
